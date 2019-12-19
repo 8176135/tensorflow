@@ -894,7 +894,7 @@ def save_graph_to_file(graph_file_name, module_spec, class_count):
     sess, _, _, _, _, _ = build_eval_session(module_spec, class_count)
     graph = sess.graph
 
-    output_graph_def = tf.graph_util.convert_variables_to_constants(
+    output_graph_def = tf.compat.v1.graph_util.convert_variables_to_constants(
         sess, graph.as_graph_def(), [FLAGS.final_tensor_name])
 
     with tf.io.gfile.GFile(graph_file_name, 'wb') as f:
@@ -924,15 +924,16 @@ def add_jpeg_decoding(module_spec):
     input_height, input_width = hub.get_expected_image_size(module_spec)
     input_depth = hub.get_num_image_channels(module_spec)
     jpeg_data = tf.compat.v1.placeholder(tf.string, name='DecodeJPGInput')
-    decoded_image = tf.image.decode_jpeg(jpeg_data, channels=input_depth)
+    decoded_image = tf.io.decode_image(jpeg_data, channels=input_depth, dtype=tf.dtypes.float32)
     # Convert from full range of uint8 to range [0,1] of float32.
-    decoded_image_as_float = tf.image.convert_image_dtype(decoded_image,
-                                                          tf.float32)
-    decoded_image_4d = tf.expand_dims(decoded_image_as_float, 0)
-    resize_shape = tf.stack([input_height, input_width])
-    resize_shape_as_int = tf.cast(resize_shape, dtype=tf.int32)
-    resized_image = tf.compat.v1.image.resize_bilinear(decoded_image_4d,
-                                             resize_shape_as_int)
+    decoded_image_4d = tf.expand_dims(decoded_image, 0)
+    # resize_shape = tf.stack([input_height, input_width])
+    # print("---------------------\n\n\n-----------------")
+    # print(resize_shape)
+    # resize_shape_as_int = tf.cast(resize_shape, dtype=tf.int32)
+    # print(resize_shape_as_int)
+    # resized_image = tf.image.resize(decoded_image_4d,
+    #                                   resize_shape_as_int)
     return jpeg_data, resized_image
 
 
@@ -947,7 +948,7 @@ def export_model(module_spec, class_count, saved_model_dir):
     # The SavedModel should hold the eval graph.
     sess, in_image, _, _, _, _ = build_eval_session(module_spec, class_count)
     with sess.graph.as_default() as graph:
-        tf.saved_model.simple_save(
+        tf.compat.v1.saved_model.simple_save(
             sess,
             saved_model_dir,
             inputs={'image': in_image},
