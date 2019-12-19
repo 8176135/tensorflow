@@ -934,7 +934,7 @@ def add_jpeg_decoding(module_spec):
     # print(resize_shape_as_int)
     # resized_image = tf.image.resize(decoded_image_4d,
     #                                   resize_shape_as_int)
-    return jpeg_data, resized_image
+    return jpeg_data, decoded_image_4d
 
 
 def export_model(module_spec, class_count, saved_model_dir):
